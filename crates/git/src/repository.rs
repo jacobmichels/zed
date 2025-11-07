@@ -2451,8 +2451,17 @@ mod tests {
     use super::*;
     use gpui::TestAppContext;
 
+    fn disable_git_global_config() {
+        unsafe {
+            std::env::set_var("GIT_CONFIG_GLOBAL", "");
+            std::env::set_var("GIT_CONFIG_SYSTEM", "");
+        }
+    }
+
     #[gpui::test]
     async fn test_checkpoint_basic(cx: &mut TestAppContext) {
+        disable_git_global_config();
+
         cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
@@ -2541,6 +2550,8 @@ mod tests {
 
     #[gpui::test]
     async fn test_checkpoint_empty_repo(cx: &mut TestAppContext) {
+        disable_git_global_config();
+
         cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
@@ -2585,6 +2596,8 @@ mod tests {
 
     #[gpui::test]
     async fn test_compare_checkpoints(cx: &mut TestAppContext) {
+        disable_git_global_config();
+
         cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
@@ -2624,6 +2637,8 @@ mod tests {
 
     #[gpui::test]
     async fn test_checkpoint_exclude_binary_files(cx: &mut TestAppContext) {
+        disable_git_global_config();
+
         cx.executor().allow_parking();
 
         let repo_dir = tempfile::tempdir().unwrap();
