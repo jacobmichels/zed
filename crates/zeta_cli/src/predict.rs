@@ -1,3 +1,4 @@
+use crate::PromptFormat;
 use crate::example::{ActualExcerpt, NamedExample};
 use crate::headless::ZetaCliAppState;
 use crate::paths::LOGS_DIR;
@@ -18,9 +19,11 @@ use std::time::{Duration, Instant};
 
 #[derive(Debug, Args)]
 pub struct PredictArguments {
-    example_path: PathBuf,
+    #[arg(long, value_enum, default_value_t = PromptFormat::default())]
+    prompt_format: PromptFormat,
     #[clap(long, short, value_enum, default_value_t = PredictionsOutputFormat::Md)]
     format: PredictionsOutputFormat,
+    example_path: PathBuf,
 }
 
 #[derive(clap::ValueEnum, Debug, Clone)]
@@ -35,7 +38,9 @@ pub async fn run_zeta2_predict(
     cx: &mut AsyncApp,
 ) {
     let example = NamedExample::load(args.example_path).unwrap();
-    let result = zeta2_predict(example, &app_state, cx).await.unwrap();
+    let result = zeta2_predict(example, args.prompt_format, &app_state, cx)
+        .await
+        .unwrap();
     result.write(args.format, std::io::stdout()).unwrap();
 }
 
@@ -45,6 +50,7 @@ thread_local! {
 
 pub async fn zeta2_predict(
     example: NamedExample,
+    prompt_format: PromptFormat,
     app_state: &Arc<ZetaCliAppState>,
     cx: &mut AsyncApp,
 ) -> Result<PredictionDetails> {
@@ -106,6 +112,9 @@ pub async fn zeta2_predict(
     let mut debug_rx = zeta.update(cx, |zeta, _| zeta.debug_info())?;
 
     let refresh_task = zeta.update(cx, |zeta, cx| {
+        let mut options = zeta.options().clone();
+        options.prompt_format = prompt_format.into();
+        zeta.set_options(options);
         zeta.refresh_context(project.clone(), cursor_buffer.clone(), cursor_anchor, cx)
     })?;
 
