@@ -40,7 +40,6 @@
     rec {
       packages = forAllSystems (pkgs: rec {
         default = mkZed pkgs;
-        debug = default.override { profile = "dev"; };
       });
       formatter = forAllSystems (pkgs: pkgs.nixfmt-rfc-style);
       overlays.default = final: _: {
